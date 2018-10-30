@@ -1,4 +1,6 @@
 
+import java.io.{File, PrintWriter}
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.asynchttpclient.DefaultAsyncHttpClientConfig
@@ -23,18 +25,31 @@ object GridInformation {
 
 object EnrichGridIds extends App {
 
+  // Input file setting
   val csvFileName = "test/NPO-Contacts.csv"
-
   val regex = ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)" // split on comma, ignore commas inside quotes
   val limit = -1 // -1 -> keep empty values
 
-  val n = 100 // how many tests
+  val n = 10 // how many tests
+
+  // Disambiguation setting
+
+  // if true, the most specific result is used if there are multiple results
+  // if false, multiple results are discarded
+  val lenientMultiple = true
+
+  val apiKey = "e53584d127d0aa0298c89144385a6825a20a6a2536f08ac1"
+  val baseUrl = "https://springer-grid.uberresearch.com/"
+  val api = "api/autocomplete"
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
 
   val wsConfig = new DefaultAsyncHttpClientConfig.Builder().build()
   val client: WSClient = AhcWSClient(wsConfig)
+
+  // Output file setting
+  val outputFileName = "output.csv"
 
   val lines = Source.fromFile(csvFileName)
     .getLines
@@ -55,24 +70,23 @@ object EnrichGridIds extends App {
       case (institution, email) => loadGridId(institution).map(id => (institution, id, email))
     }
 
-  val result = awaitSuccess(futures, List()) match {
+  val rawResult = awaitSuccess(futures, List()) match {
     case Left(error) => Logger.error(error.getLocalizedMessage); Nil
     case Right(x) => x
   }
 
-  result.flatMap {
+  val results = rawResult.flatMap {
     case (institution, Some(id), email) => List((institution, id, email))
     case (institution, None, _) =>
       Logger.error(s"could not find id for $institution")
       Nil
   }
 
-  result.foreach(println)
-
+  val pw = new PrintWriter(new File(outputFileName))
+  results.foreach(result => pw.write(s"${result._1},${result._2},${result._3}"))
+  pw.close
   def loadGridId(institution: String): Future[Option[String]] = {
-    val apiKey = "e53584d127d0aa0298c89144385a6825a20a6a2536f08ac1"
-    val baseUrl = "https://springer-grid.uberresearch.com/"
-    val api = "api/autocomplete"
+
 
     val url = s"$baseUrl$api?q=$institution"
 
@@ -90,11 +104,18 @@ object EnrichGridIds extends App {
             Logger.error(s"no result found for $institution")
             None
           } else {
-            Logger.error(s"multiple results found for $institution")
-            None
+            if (lenientMultiple) {
+              Some(gridInformations.head.id)
+            } else {
+              Logger.error(s"multiple results found for $institution")
+              None
+            }
           }
-        case _ =>
-          Logger.error(s"An error occurred while fetching the Grid ID for $institution")
+        case e =>
+          Logger.error(s"An error occurred while fetching the Grid ID for $institution: ${e}")
+          Logger.error(response.statusText)
+          Logger.error(response.body)
+
           None
       }
     }
