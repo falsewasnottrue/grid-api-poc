@@ -1,0 +1,82 @@
+### Ignore all dot files ###
+.*
+*.log
+
+### Scala ###
+*.sc
+
+
+### Play! ###
+**/project/project
+project/target
+target
+tmp
+**/public/*
+!**/public/partner-logos/
+
+**/logs
+
+
+### Git ###
+!.gitignore
+*.orig
+.git/
+
+
+### UI ###
+**/ui/src/main/com/springer/nemo/platform/assets/components
+**/ui/src/main/com/springer/nemo/platform/assets/styles/grunticon
+node_modules
+npm-debug.log
+package-lock.json
+npm
+!.npmrc
+
+### Nemo-Csscala ###
+/nemo-assets/src-generated/
+
+### IntelliJ ###
+*.iml
+**/*.iml
+*.ipr
+*.iws
+.idea/
+.idea_modules/
+atlassian-ide-plugin.xml
+
+
+### Eclipse ###
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+.externalToolBuilders/
+*.launch
+/bin
+/lib/
+out/
+
+
+### App-Anatomy
+run-like-a-pipeline.sh
+
+### Python ###
+*.pyc
+
+### exclude old setup ###
+/public
+/ui
+/app
+/project
+nemo-assets/src-generated/
+
+
