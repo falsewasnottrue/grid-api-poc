@@ -83,8 +83,9 @@ object EnrichGridIds extends App {
   }
 
   val pw = new PrintWriter(new File(outputFileName))
-  results.foreach(result => pw.write(s"${result._1},${result._2},${result._3}"))
+  results.foreach(result => pw.println(s"${result._1},${result._2},${result._3}"))
   pw.close
+
   def loadGridId(institution: String): Future[Option[String]] = {
 
 
